@@ -7,14 +7,25 @@ const Borrow_add = () => {
     const [buttonText, setButtonText] = useState('สร้าง');
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [timerRunning, setTimerRunning] = useState(false);
+    const [member_id, setMemberId] = useState(null);
+    const [uid, setUID] = useState(null);
 
-    const handleCreate = () => {
-        setTimerRunning(true); // Start the timer
-        setTimeout(() => {
-            setButtonText('สร้างรายการยืมเรียบร้อยแล้ว');
+    async function handleCreate() {
+        console.log(member_id)
+        const response = await fetch(`http://127.0.0.1:8000/borrowing/create`, 
+        {
+            method: "POST",
+		    headers: {
+                "Content-Type": "application/json",
+            },
+		    body: JSON.stringify({
+                "member_id": parseInt(member_id),
+                "unique_id": parseInt(uid),
+            })
+        });
+        if (response.status === 201) {
             setIsSubmitted(true);
-            setTimerRunning(false); // Stop the timer after delay
-        }, 3000); // Replace 3000 with actual API call duration or desired delay
+        }
     };
 
     return (
@@ -33,6 +44,7 @@ const Borrow_add = () => {
                     <div style={{ marginLeft: '50px', marginBottom: '10px' }}>
                         <label style={{ marginRight: '14px' }}>รหัสสมาชิก:</label>
                         <input
+                            onChange={(event) => setMemberId(event.target.value)}
                             type="text"
                             className="fs-20 fw-4"
                             placeholder="User ID"
@@ -47,7 +59,8 @@ const Borrow_add = () => {
                     {/* รหัสหนังสือ */}
                     <div style={{ marginLeft: '50px', marginBottom: '20px' }}>
                         <label style={{ marginRight: '12px' }}>รหัสหนังสือ:</label>
-                        <input 
+                        <input
+                            onChange={(event) => setUID(event.target.value)}
                             type="text" 
                             className="fs-20 fw-4" 
                             placeholder="Book UID" 
@@ -68,7 +81,7 @@ const Borrow_add = () => {
                                 </Link>
                             </label>
                         ) : timerRunning ? (
-                            <label className="menu-button text-white fs-18 fw-5" style={{ marginLeft: '500px' }} >กรุณารอสักครู่</label>
+                            <label className="text-white fs-18 fw-5" style={{ marginLeft: '500px' }} >กรุณารอสักครู่</label>
                         ) : (
 
                             <label className="menu-button text-white fs-18 fw-5" style={{ marginLeft: '550px' }} onClick={handleCreate} >

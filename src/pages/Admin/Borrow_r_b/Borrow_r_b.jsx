@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import './Borrow_r_b.css';
 
@@ -7,36 +7,29 @@ const Borrow_r_b = () => {
 {/* ส่วนของการโชว์ Borrow List */}
     const [inputValue, setInputValue] = useState('');
     const [searchResults, setSearchResults] = useState([]); // Added state for search results
-    const handleSearch = () => {
+    const handleSearch = async () => {
         const searchResultsElement = document.querySelector('.search-results');
+        const response = await fetch(`http://127.0.0.1:8000/borrowing?id=${inputValue}`)
+        const data = await response.json();
+        const searchResults = data.borrowing_list;
+    
+        console.log(searchResults)
         if (inputValue) {
-            // Simulate API call (replace with your actual API call)
-            const mockSearchResults = [
-                { borrow_id: 1, user_id: 123, name: 'John Doe', title: 'The Lord of the Rings', status: 'Reserve' },
-                { borrow_id: 2, user_id: 456, name: 'Jane Smith', title: 'Pride and Prejudice', status: 'Reserve' },
-                { borrow_id: 3, user_id: 789, name: 'Alice', title: 'Alice in Wonderland', status: 'Approved' },
-                { borrow_id: 4, user_id: 456, name: 'Jane Smith', title: 'มานีมีหม้อ', status: 'Borrow' },
-                { borrow_id: 5, user_id: 456, name: 'Jane Smith', title: 'ธาตุทองซาวด์', status: 'Reserve' },
-            // Add more mock search results here
-            ];
+
+            const filteredResults = searchResults.filter((result) => {
+                const validStatus = result.borrow_status === 'borrow' || result.borrow_status === 'reserve';
   
-        // Filter results based on status and matching ID
-            const filteredResults = mockSearchResults.filter((result) => {
-                const validStatus = result.status === 'Borrow' || result.status === 'Reserve'; // Check for valid status
-                const matchingId = result.borrow_id === parseInt(inputValue) || result.user_id === parseInt(inputValue); // Check for matching ID
-  
-                return validStatus && matchingId; // Show only entries with valid status AND matching ID
+                return validStatus; 
             });
   
-            console.log('Filtered results:', filteredResults); // Log filtered results for debugging
+            console.log('Filtered results:', filteredResults);
   
-            setSearchResults(filteredResults); // Update search results state
+            setSearchResults(filteredResults);
       
             if (searchResultsElement) {
-                searchResultsElement.style.display = 'block'; // Show results container
+                searchResultsElement.style.display = 'block';
             }
         } else {
-        // Clear search results and hide container
             setSearchResults([]);
             if (searchResultsElement) {
                 searchResultsElement.style.display = 'none';
@@ -44,8 +37,26 @@ const Borrow_r_b = () => {
         }
     };
 
+    async function handleBorrow(itemId) {
+        const response = await fetch(`http://127.0.0.1:8000/borrowing/set-status`, 
+        {
+            method: "POST",
+		    headers: {
+                "Content-Type": "application/json",
+            },
+		    body: JSON.stringify({
+                "borrow_id": itemId,
+                "status": "borrow",
+            })
+        });
+        if (response.status === 200) {
+            window.location.reload();
+        }
+    }
+
     return (
         <div className="container" style={{ marginTop: '20px' }}>
+
             <div className="holder">
                 <Link to="/" style={{ marginLeft: '100px' }}>
                     <back-button className="fs-22 fw-4">&lt; ย้อนกลับ</back-button>
@@ -96,8 +107,7 @@ const Borrow_r_b = () => {
                                     <div>
                                         สถานะ: {result.borrow_status}
                                         {result.borrow_status === 'Reserve' && (
-                                            <div className="menu-button text-white fs-20 fw-4" style={{ float: 'right', marginRight: '100px'}}>
-                                                {/* change status */}
+                                            <div className="menu-button text-white fs-20 fw-4" style={{ float: 'right', marginRight: '100px'}} onClick={() => handleBorrow(result.borrow_id)}>
                                                 เริ่มยืม
                                             </div>
                                         )}

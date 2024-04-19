@@ -4,60 +4,55 @@ import './Borrow_return.css';
 
 const Borrow_return = () => {
 
-{/* ส่วนของการโชว์ Borrow List */}
-    const [inputValue, setInputValue] = useState('');
-    const [searchResults, setSearchResults] = useState([]); // Added state for search results
-    const handleSearch = () => {
-        const searchResultsElement = document.querySelector('.search-results');
-        if (inputValue) {
-            // Simulate API call (replace with your actual API call)
-            const mockSearchResults = [
-                { borrow_id: 1, user_id: 123, name: 'John Doe', title: 'The Lord of the Rings', status: 'Reserve' },
-                { borrow_id: 2, user_id: 456, name: 'Jane Smith', title: 'Pride and Prejudice', status: 'Borrow' },
-                { borrow_id: 3, user_id: 789, name: 'Alice', title: 'Alice in Wonderland', status: 'Return' },
-            // Add more mock search results here
-            ];
-  
-        // Filter results based on status and matching ID
-            const filteredResults = mockSearchResults.filter((result) => {
-                const validStatus = result.status === 'Borrow' || result.status === 'Return'; // Check for valid status
-                const matchingId = result.borrow_id === parseInt(inputValue) || result.user_id === parseInt(inputValue); // Check for matching ID
-  
-                return validStatus && matchingId; // Show only entries with valid status AND matching ID
-            });
-  
-            console.log('Filtered results:', filteredResults); // Log filtered results for debugging
-  
-            setSearchResults(filteredResults); // Update search results state
-      
-            if (searchResultsElement) {
-                searchResultsElement.style.display = 'block'; // Show results container
-            }
-        } else {
-        // Clear search results and hide container
-            setSearchResults([]);
-            if (searchResultsElement) {
-                searchResultsElement.style.display = 'none';
-            }
-        }
-    };
+const [inputValue, setInputValue] = useState('');
+const [searchResults, setSearchResults] = useState([]);
 
-    function handleReturn(itemId) {
-        // 1. Make an API call (if applicable)
-        fetch(`/api/items/${itemId}/return`, {
-          method: 'PUT',
-        })
-        .then(response => response.json())
-        .then(data => {
-          // 2. Update application state (if applicable)
-          console.log('Item returned successfully:', data);
-          // Update your application state to reflect the new status (e.g., redux dispatch)
-        })
-        .catch(error => {
-          console.error('Error returning item:', error);
-          // Handle errors appropriately (e.g., display an error message)
+const handleSearch = async () => {
+    const searchResultsElement = document.querySelector('.search-results');
+    const response = await fetch(`http://127.0.0.1:8000/borrowing?id=${inputValue}`)
+    const data = await response.json();
+    const searchResults = data.borrowing_list;
+
+    console.log(searchResults)
+    if (inputValue) {
+
+        const filteredResults = searchResults.filter((result) => {
+            const validStatus = result.borrow_status === 'borrow' || result.borrow_status === 'return'; // Check for valid status
+
+            return validStatus;
         });
-      }
+
+        console.log('Filtered results:', filteredResults);
+
+        setSearchResults(filteredResults);
+  
+        if (searchResultsElement) {
+            searchResultsElement.style.display = 'block';
+        }
+    } else {
+        setSearchResults([]);
+        if (searchResultsElement) {
+            searchResultsElement.style.display = 'none';
+        }
+    }
+};
+
+    async function handleReturn(itemId) {
+        const response = await fetch(`http://127.0.0.1:8000/borrowing/set-status`, 
+        {
+            method: "POST",
+		    headers: {
+                "Content-Type": "application/json",
+            },
+		    body: JSON.stringify({
+                "borrow_id": itemId,
+                "status": "return",
+            })
+        });
+        if (response.status === 200) {
+            window.location.reload();
+        }
+    }
 
     return (
         <div className="container" style={{ marginTop: '20px' }}>
@@ -92,17 +87,17 @@ const Borrow_return = () => {
                             {searchResults.map((result) => (
                                 <div key={result.borrow_id} style={{ marginLeft: '50px', marginBottom: '20px' }}>
                                     <div style={{ marginTop: '20px' }}>หมายเลขรายการยืม: {result.borrow_id}</div>
-                                    <div>รหัสผู้ยืม: {result.user_id}</div>
+                                    <div>รหัสผู้ยืม: {result.memeber_id}</div>
                                     <div>ชื่อผู้ยืม: {result.name}</div>
                                     <div>ชื่อหนังสือ: {result.title}</div>
                                     <div>วันที่ยืม: {result.borrow_date} </div>
                                     <div>
-                                        สถานะ: {result.status}
-                                        {result.status === 'Borrow' && (
-                                            <div className="menu-button text-white fs-20 fw-4" style={{ float: 'right', marginRight: '100px' }}>
-                                                <form onSubmit={() => handleReturn(result.id)}>
-                                                    คืนหนังสือ
-                                                </form>
+                                        สถานะ: {result.borrow_status}
+                                        {result.borrow_status === 'borrow' && (
+                                            <div className="menu-button text-white fs-20 fw-4" style={{ float: 'right', marginRight: '100px' }} onClick={() => handleReturn(result.borrow_id)}>
+                                                
+                                                คืนหนังสือ
+                                                
                                             </div>
                                         )}
                                     </div>
